@@ -6,8 +6,8 @@
 #include<vector>
 using namespace std;
 
-unsigned int Formula::currentLevel = 0;
-unsigned int Formula::initSize=0;
+int Formula::currentLevel = 0;
+int Formula::initSize=0;
 vector<vector<int> > Formula::posWatched;
 vector<vector<int> > Formula::negWatched;
 vector<vector<int> > Formula::clauses;
@@ -18,6 +18,52 @@ vector<double> Formula::VSIDS;
 vector<int> Formula::conflictClause;
 
 int Formula::targetLevel = -1;
+
+void Formula::addClause(vector<int> c)
+{
+	clauses.push_back(c);
+	int l = clauses.size();
+ 	int k=0;
+	for(int i=0;i<c.size();i++)
+	{
+		int m = c[i];
+		if(m>0)
+		{
+			int k=0;
+			for(int j=0;j<posWatched[m].size();j++)
+			{
+				if(l-1 == posWatched[m][j])
+				{
+					k=1;
+					break;
+				}
+			}
+			if(k == 0)
+				posWatched[m].push_back(l-1);
+		}
+		else if(m<0)
+		{
+			m = abs(m);
+			int k=0;
+			for(int j=0;j<negWatched[m].size();j++)
+			{
+				if(l-1 == negWatched[m][j])
+				{
+					k=1;
+					break;
+				}
+			}
+			if(k == 0)
+				negWatched[m].push_back(l-1);
+		}
+	}
+	int p=conflictClause[0],q;
+	if(conflictClause.size() > 1)
+		q = conflictClause[1];
+	else	
+		q = 0;
+ 	watchingList.push_back(pair<int,int>(p,q));
+}
 
 void Formula::zero()
 {
@@ -41,7 +87,7 @@ void Formula::zero()
 				j--;
 			}
 	}
-	conflictGraph.clear();
+//	conflictGraph.clear();
 }
 
 Formula::Formula()
@@ -149,7 +195,6 @@ int Formula::init()
 		if(result == unsat)
 			return unsat;
 	}
-	conflictGraph.clear();
 
 	return unknown;
 }
@@ -185,24 +230,28 @@ vector<int> resolve(vector<int> a,vector<int> b,int c)
 void showClause(vector<int> c)
 {
 	cout<<endl;
-	for(unsigned int i=0;i<c.size();i++)
+	for(int i=0;i<c.size();i++)
 		cout<<c[i]<<" ";
 	cout<<endl;
 }
 
-int Formula::conflictResolve(int conflicting)
+void Formula::showConflictGraph()
 {
-	showInfo();
 //	if(this->level==8)
 	{
 		for(unsigned int j=0;j<conflictGraph.size();j++)
 		{
 			Node n = conflictGraph[j];
 			printf("x%02d=%2d@%02d ",n.literal,n.value,n.level);
+			if(n.antecedent == -1)
+				cout<<"assign! ";
 		}
 		cout<<endl;
 	}
-
+}
+int Formula::conflictResolve(int conflicting)
+{
+	showConflictGraph();
 	//First UIP
 	vector<int> clause;
         clause.assign(clauses[conflicting].begin(),clauses[conflicting].end());
@@ -210,11 +259,12 @@ int Formula::conflictResolve(int conflicting)
         int x=-1;//cout<<"FirstUIP"<<endl;
         while(checkUIP(clause,&x))
         {	
+//		showConflictGraph();
 //`		if(this->level==12)
 		{
-			showClause(clause);
-			cout<<"+";
-			showClause(clauses[conflictGraph[x].antecedent]);
+//			showClause(clause);
+//			cout<<"+";
+//			showClause(clauses[conflictGraph[x].antecedent]);
 		}
                 clause = resolve(clause,clauses[conflictGraph[x].antecedent],conflictGraph[x].literal);
 		conflictGraph.erase(conflictGraph.begin()+x);
@@ -222,25 +272,28 @@ int Formula::conflictResolve(int conflicting)
         }
 
 //		cout<<"Done FirstUIP"<<endl;
-	conflictClause = clause;
-	cout<<"conflict clause:"<<endl;
-	showClause(conflictClause);
+	this->conflictClause = clause;
 
-	
+
 	int maxLevel=-1;
-	for(unsigned int i=0;i<clause.size();i++)
+	for(int i=0;i<clause.size();i++)
 	{
+		cout<<i<<" ";
 		int k=abs(clause[i]);
+		cout<<k<<" ";
 		for(unsigned int j=conflictGraph.size()-1;j>=0;j--)
 		{
-			if(k==conflictGraph[j].literal && conflictGraph[j].level!=this->level)
+			if(conflictGraph[j].level == this->level && k == conflictGraph[j].literal)
 			{
-				if(this->level == 12)
-					cout<<"k "<<k<<"@"<<conflictGraph[j].level<<" ";
-
+				this->conflictx = conflictGraph[j].literal;
+				this->conflictv = conflictGraph[j].value*-1;
+			}
+			else if(k==conflictGraph[j].literal)
+			{
 				if(maxLevel < conflictGraph[j].level)
 					maxLevel = conflictGraph[j].level;
 			}
+			cout<<j<<" ";
 		}
 	}	
 	if(maxLevel==-1 && clause.size() == 1)
@@ -286,12 +339,12 @@ bool Formula::checkUIP(vector<int> c,int *x)
 
 int Formula::BCP(int c)
 {
-;	cout<<"\n BCP clause "<<c<<", in level "<<this->level<<" ";
+	cout<<"\n BCP clause "<<c<<", in level "<<this->level<<" ";
 
-;	showClause(clauses[c]);
+	showClause(clauses[c]);
         for(unsigned int i=0;i<clauses[c].size();i++)
         	cout<<literals[abs(clauses[c][i])]<<" ";
-;	cout<<endl;
+	cout<<endl;
 
 	int result = unknown,n=0,value=0,x=0;
 	for(unsigned int i=0;i<clauses[c].size();i++)
@@ -351,7 +404,7 @@ int Formula::updateWatchingList(int c,int x)
 		watchingList[c].first = otherWatcher;
 		watchingList[c].second = l;
 		
-;		cout<<"Update watchingList from "<<x<<" to "<<l<<" on "<<c<<" clause\n";	
+//		cout<<"Update watchingList from "<<x<<" to "<<l<<" on "<<c<<" clause\n";	
 		
 		return -100;
 	}	
@@ -377,7 +430,7 @@ int Formula::updateWatchingList(int c,int x)
 			cout<<literals[abs(clauses[c][i])]<<" ";
 		cout<<endl;
 
-		cout<<"Watcher: "<<x<<","<<otherWatcher<<endl;
+//		cout<<"Watcher: "<<x<<","<<otherWatcher<<endl;
 
 		conflicting = c;
 		return unsat;
@@ -430,7 +483,7 @@ int Formula::assign(int x,int value) 	//-1:false
 			}
 		}
 	}
-;	showInfo();
+//	showInfo();
 	return unknown;
 }
 
@@ -461,7 +514,7 @@ void Formula::firstUIP()
 }
 
 void Formula::showClauses()
-{
+{/*
 	cout<<endl<<"clauses"<<setw(3*literals.size())<<"lits"<<setw(4)<<" "<<"watching_first, watching_second\n";	
 	for(unsigned int i=0;i<clauses.size();i++)
 	{
@@ -475,6 +528,7 @@ void Formula::showClauses()
 		cout<<setw(2)<<watchingList[i].first<<" ";
 		cout<<setw(2)<<watchingList[i].second<<endl;
 	}
+	*/
 }
 
 void Formula::showInfo()

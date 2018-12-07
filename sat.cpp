@@ -38,8 +38,10 @@ int main(int arg,char* argv[])
 	return 0;
 }
 
-int maxy(vector<double>);
+int maxy(Formula);
 void showStack(vector<Formula>);
+
+int timeTrack = 0;
 
 bool showDetail = true;
 int flag = 0;
@@ -53,7 +55,7 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 	while(true)
 	{
 		//decide next branch
-		x = maxy(fv.back().counterList);
+		x = maxy(fv.back());
 		
 		value = fv.back().literalsPolar[abs(x)];
 	
@@ -74,9 +76,12 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 			//cout<<newf->curDec<<",,"<<newf->curValue;
 			cout<<"//level: "<<newf->level<<" x"<<newf->curDec<<" = "<<value;
 			int result = newf->assign(x,value);
+			cout<<endl;
 
 			if(result == unsat)
 			{
+				timeTrack++;
+
 				blevel = newf->conflictResolve(newf->conflicting);
 				cout<<"Return to level "<<blevel<<endl;
 
@@ -86,7 +91,16 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 					return unsat;
 				}
 				else
-				{
+				{	
+
+					if(timeTrack%128 == 0)
+					{
+						for(int i=0;i<Formula::VSIDS.size();i++)
+						{
+							Formula::VSIDS[i] /= 2.0;
+						}
+					}
+
 					//backtracking
 					while(fv.size()>0 && fv.back().level != blevel)
 					{
@@ -98,19 +112,13 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 					
 					
 					x = newf->conflictx;
+					Formula::VSIDS[x] += 2;			
+
 					value = newf->conflictv;
 					Formula::currentLevel = blevel;
 
-					if(newf->conflictClause.size() <= 10 || true)
-					{
-						newf->addClause(newf->conflictClause);
-						antedent = newf->clauses.size()-1;
-					}
-					else
-					{
-						antedent = -1;
-						Formula::currentLevel++;
-					}				
+					newf->addClause(newf->conflictClause);
+					antedent = newf->clauses.size()-1;
 
 					if(blevel == 0)
 					{
@@ -149,14 +157,16 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 	}
 }
 
-int maxy(vector<double> c)
+int maxy(Formula f)
 {
 	double max=0,j=1;
-	for(int i=1;i<c.size();i++)
+	for(int i=1;i<f.counterList.size();i++)
 	{
-		if(max<c[i])
+		if(f.counterList[i] == -1)
+			continue;
+		if(max<f.counterList[i]+f.VSIDS[i])
 		{
-			max = c[i];
+			max = f.counterList[i]+f.VSIDS[i];
 			j = i;
 		}
 	}

@@ -92,6 +92,8 @@ public:
 
 	void zero();
 
+	void showConflictGraph();
+
 	int conflictResolve(int);	
 };
 #endif
