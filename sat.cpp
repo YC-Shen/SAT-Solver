@@ -69,6 +69,11 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 			Formula *newf=new Formula(fv.back());	
 			newf->level = Formula::currentLevel;
 
+//			if(newf->level == 1)
+//			{
+//				int r;cin>>r;
+//			}
+
 			Formula::conflictGraph.push_back(Node(x,value,newf->level,antedent));
 			antedent = -1;				
 
@@ -106,10 +111,12 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 					{
 						fv.pop_back();
 					}
-					if(Formula::conflictGraph.size()>0)
-					while(Formula::conflictGraph.back().level > blevel)
+					int l = Formula::conflictGraph.size();
+					while(l>0 && Formula::conflictGraph[l-1].level > blevel)
+					{
 						Formula::conflictGraph.pop_back();
-					
+						l--;
+					}
 					
 					x = newf->conflictx;
 					Formula::VSIDS[x] += 2;			
@@ -126,9 +133,15 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 						Formula::currentLevel++;
 						nf->level = 1;
 					
-						nf->conflictGraph.push_back(Node(x,value,1,antedent));
+						antedent = -1;
+						//Formula::conflictGraph.push_back(Node(x,value,1,antedent));
+						
+						//Formula::conflictGraph.push_back(Node(x,value,1,antedent));
+						cout<<Formula::conflictGraph.size();
 						cout<<"//level: "<<nf->level<<" x"<<x<<" = "<<value;
 						cout<<" ";
+						Formula::conflictGraph.push_back(Node(x,value,1,-1));
+
 						result = nf->assign(x,value);
 						cout<<endl;
 
@@ -137,6 +150,9 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 
 						fv.push_back(nf);
 						Formula::currentLevel++;
+		
+						nf->showConflictGraph();
+				//		int r;cin>>r;
 						break;
 					}
 				}

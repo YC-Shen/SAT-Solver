@@ -161,6 +161,8 @@ int Formula::init()
 			return unsat;
 	}
 //	conflictGraph.clear();
+	showConflictGraph();
+	int r;cin>>r;
 
 	return unknown;
 }
@@ -201,18 +203,20 @@ void showClause(vector<int> c)
 	cout<<endl;
 }
 
+void Formula::showConflictGraph()
+{
+	for(int j=0;j<conflictGraph.size();j++)
+	{
+		Node n = conflictGraph[j];
+		printf("x%02d=%2d@%02d ",n.literal,n.value,n.level);
+		if(n.antecedent == -1)
+			cout<<"assign! ";
+	}
+	cout<<endl;
+}
 int Formula::conflictResolve(int conflicting)
 {
-//	showInfo();
-//	if(this->level==8)
-	{
-		for(int j=0;j<conflictGraph.size();j++)
-		{
-			Node n = conflictGraph[j];
-			printf("x%02d=%2d@%02d ",n.literal,n.value,n.level);
-		}
-		cout<<endl;
-	}
+	showConflictGraph();
 
 	//First UIP
 	vector<int> clause;
@@ -228,8 +232,13 @@ int Formula::conflictResolve(int conflicting)
 			showClause(clauses[conflictGraph[x].antecedent]);
 		}
                 clause = resolve(clause,clauses[conflictGraph[x].antecedent],conflictGraph[x].literal);
+//		if(conflictGraph[x].level == 1)
+//		{
+//			int r;cin>>r;	
+//		}
 		conflictGraph.erase(conflictGraph.begin()+x);
-                int x=-1;
+
+		int x=-1;
         }
 
 //		cout<<"Done FirstUIP"<<endl;
