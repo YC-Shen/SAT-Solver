@@ -66,6 +66,8 @@ public:
 	int backtrackingTime;
 
 	//function
+//	outputFile(FILE*);
+
 	Formula();
 	Formula(const vector<vector<int> >&);
 	Formula(const Formula *);	

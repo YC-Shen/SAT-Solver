@@ -3,10 +3,15 @@
 #include<vector>
 #include "formula.h"
 #include<stdlib.h>
+#include<stdio.h>
+#include<string>
 using namespace std;
+
+void output(vector<int> );
 
 int DPLL(Formula &);
 int recurseTime=0;
+FILE* out;
 
 int main(int arg,char* argv[])
 {
@@ -14,7 +19,18 @@ int main(int arg,char* argv[])
 
 	vector<vector<int> > clauses;
 	int maxVarIndex;
+
+	string s(argv[1]);
+	int l = s.length();
+
 	parse_DIMACS_CNF(clauses, maxVarIndex, argv[1]);
+
+	s[l-1] = 't';
+	s[l-2] = 'a';
+	s[l-3] = 's';
+
+	const char *c1 = s.c_str();
+	out = fopen(c1,"w+");
 
 	Formula formula(clauses);
 	int r = formula.init();
@@ -31,17 +47,29 @@ int main(int arg,char* argv[])
 //	cin>>r;
 	int result = DPLL(formula);
 	if(result == unsat)
-		cout<<endl<<"UNSAT"<<endl;
-	else
-		cout<<endl<<"SAT"<<endl;
+		fprintf(out,"UNSAT\n");
 //	cout<<"Time : "<<recurseTime<<endl;
 	return 0;
+}
+
+void output(vector<int> c)
+{
+	fprintf(out,"SAT\n");
+	for(int i=1;i<c.size();i++)
+	{
+		int j=i;
+		if(c[i]<0)
+			j*=-1;
+
+		fprintf(out,"%d ",j);
+	}
 }
 
 int maxy(Formula);
 void showStack(vector<Formula>);
 
 int timeTrack = 0;
+int timeNode = 0;
 
 bool showDetail = true;
 int flag = 0;
@@ -54,6 +82,9 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 	int blevel=-1,x=0,value=0,antedent = -1;
 	while(true)
 	{
+		timeNode++;
+		if(timeNode % 100 == 0)
+			cout<<".";
 		//decide next branch
 		x = maxy(fv.back());
 		
@@ -79,16 +110,16 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 
 			newf->curDec = x;newf->curValue=value;
 			//cout<<newf->curDec<<",,"<<newf->curValue;
-			cout<<"//level: "<<newf->level<<" x"<<newf->curDec<<" = "<<value;
+//			cout<<"//level: "<<newf->level<<" x"<<newf->curDec<<" = "<<value;
 			int result = newf->assign(x,value);
-			cout<<endl;
+//			cout<<endl;
 
 			if(result == unsat)
 			{
 				timeTrack++;
 
 				blevel = newf->conflictResolve(newf->conflicting);
-				cout<<"Return to level "<<blevel<<endl;
+//				cout<<"Return to level "<<blevel<<endl;
 
 				if(blevel<0)
 				{
@@ -119,7 +150,6 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 					}
 					
 					x = newf->conflictx;
-					Formula::VSIDS[x] += 2;			
 
 					value = newf->conflictv;
 					Formula::currentLevel = blevel;
@@ -137,13 +167,13 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 						//Formula::conflictGraph.push_back(Node(x,value,1,antedent));
 						
 						//Formula::conflictGraph.push_back(Node(x,value,1,antedent));
-						cout<<Formula::conflictGraph.size();
-						cout<<"//level: "<<nf->level<<" x"<<x<<" = "<<value;
-						cout<<" ";
+//						cout<<Formula::conflictGraph.size();
+//						cout<<"//level: "<<nf->level<<" x"<<x<<" = "<<value;
+//						cout<<" ";
 						Formula::conflictGraph.push_back(Node(x,value,1,-1));
 
 						result = nf->assign(x,value);
-						cout<<endl;
+//						cout<<endl;
 
 						if(result == unsat)
 							return unsat;
@@ -151,7 +181,7 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 						fv.push_back(nf);
 						Formula::currentLevel++;
 		
-						nf->showConflictGraph();
+//						nf->showConflictGraph();
 				//		int r;cin>>r;
 						break;
 					}
@@ -161,6 +191,7 @@ int DPLL(Formula &f) 			// -1:false 0:unknown 1:true
 			else if(result == sat)
 			{
 				newf->showResult();
+				output(newf->literals);
 				return sat;
 			}
 			else

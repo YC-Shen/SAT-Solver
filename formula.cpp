@@ -161,8 +161,8 @@ int Formula::init()
 			return unsat;
 	}
 //	conflictGraph.clear();
-	showConflictGraph();
-	int r;cin>>r;
+//	showConflictGraph();
+//	int r;cin>>r;
 
 	return unknown;
 }
@@ -216,7 +216,7 @@ void Formula::showConflictGraph()
 }
 int Formula::conflictResolve(int conflicting)
 {
-	showConflictGraph();
+//	showConflictGraph();
 
 	//First UIP
 	vector<int> clause;
@@ -227,9 +227,9 @@ int Formula::conflictResolve(int conflicting)
         {	
 //`		if(this->level==12)
 		{
-			showClause(clause);
-			cout<<"+";
-			showClause(clauses[conflictGraph[x].antecedent]);
+//			showClause(clause);
+//			cout<<"+";
+//			showClause(clauses[conflictGraph[x].antecedent]);
 		}
                 clause = resolve(clause,clauses[conflictGraph[x].antecedent],conflictGraph[x].literal);
 //		if(conflictGraph[x].level == 1)
@@ -243,8 +243,8 @@ int Formula::conflictResolve(int conflicting)
 
 //		cout<<"Done FirstUIP"<<endl;
 	conflictClause = clause;
-	cout<<"conflict clause:"<<endl;
-	showClause(conflictClause);
+//	cout<<"conflict clause:"<<endl;
+//	showClause(conflictClause);
 
 	
 	int maxLevel=-1;
@@ -260,9 +260,6 @@ int Formula::conflictResolve(int conflicting)
 			}
 			else if(k==conflictGraph[j].literal)
 			{
-				if(this->level == 12)
-					cout<<"k "<<k<<"@"<<conflictGraph[j].level<<" ";
-
 				if(maxLevel < conflictGraph[j].level)
 					maxLevel = conflictGraph[j].level;
 			}
@@ -270,7 +267,7 @@ int Formula::conflictResolve(int conflicting)
 	}	
 	if(maxLevel==-1 && clause.size() == 1)
 		maxLevel=0;
-	cout<<"this level is "<<this->level<<endl;
+//	cout<<"this level is "<<this->level<<endl;
 	return maxLevel; 
 }
 
@@ -283,6 +280,8 @@ void Formula::addClause(vector<int> c)
 	for(int i=0;i<c.size();i++)
 	{
 		int m = c[i];
+		VSIDS[abs(m)] += 2.0;
+
 		if(m>0)
 		{
 			int k=0;
@@ -359,11 +358,11 @@ bool Formula::checkUIP(vector<int> c,int *x)
 
 int Formula::BCP(int c)
 {
-	cout<<" BCP clause "<<c<<" in "<<this->level<<" ";
-	showClause(clauses[c]);
-        for(int i=0;i<clauses[c].size();i++)
-        	cout<<literals[abs(clauses[c][i])]<<" ";
-	cout<<endl;
+//	cout<<" BCP clause "<<c<<" in "<<this->level<<" ";
+//	showClause(clauses[c]);
+//        for(int i=0;i<clauses[c].size();i++)
+  //      	cout<<literals[abs(clauses[c][i])]<<" ";
+//	cout<<endl;
 
 	int result = unknown,n=0,value=0,x=0;
 	for(int i=0;i<clauses[c].size();i++)
@@ -444,13 +443,13 @@ int Formula::updateWatchingList(int c,int x)
 	else
 	{
 		//conflict
-		cout << " !!conflict!! in "<<c<<": ";
-		showClause(clauses[c]);
-		for(int i=0;i<clauses[c].size();i++)
-			cout<<literals[abs(clauses[c][i])]<<" ";
-		cout<<endl;
+//		cout << " !!conflict!! in "<<c<<": ";
+//		showClause(clauses[c]);
+//		for(int i=0;i<clauses[c].size();i++)
+//			cout<<literals[abs(clauses[c][i])]<<" ";
+//		cout<<endl;
 
-		cout<<"Watcher: "<<x<<","<<otherWatcher<<endl;
+//		cout<<"Watcher: "<<x<<","<<otherWatcher<<endl;
 
 		conflicting = c;
 		return unsat;
